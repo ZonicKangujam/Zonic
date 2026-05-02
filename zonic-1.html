@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zonic Kangujam</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #111114;
+      --accent: #a0a0b8;
+      --accent-light: #d0d0e8;
+      --text: #eeeef5;
+      --muted: #4a4a58;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Cormorant Garamond', serif;
+      overflow-x: hidden;
+    }
+
+    /* Particle canvas */
+    #canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Saturn canvas */
+    #saturn {
+      position: fixed;
+      bottom: -30px;
+      right: -40px;
+      width: 380px;
+      height: 380px;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0;
+      animation: fadeIn 2s ease 1.5s forwards;
+    }
+
+    /* Grain */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .page {
+      position: relative;
+      z-index: 3;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 24px;
+    }
+
+    .top-line {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--accent));
+      margin-bottom: 48px;
+      opacity: 0;
+      animation: fadeIn 1s ease 0.2s forwards;
+    }
+
+    .name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3.5rem, 15vw, 7rem);
+      letter-spacing: 0.18em;
+      line-height: 1;
+      text-align: center;
+      color: var(--text);
+      opacity: 0;
+      animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.4s forwards;
+    }
+
+    .name::after {
+      content: 'KANGUJAM';
+      display: block;
+      font-size: clamp(1rem, 4vw, 1.5rem);
+      letter-spacing: 0.55em;
+      color: var(--accent);
+      margin-top: 6px;
+      font-family: 'DM Mono', monospace;
+      font-weight: 300;
+    }
+
+    .quote-wrap {
+      margin-top: 44px;
+      text-align: center;
+      opacity: 0;
+      animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 0.7s forwards;
+      min-height: 1.8em;
+    }
+
+    .quote-main {
+      font-family: 'DM Mono', monospace;
+      font-size: clamp(0.72rem, 2.6vw, 0.9rem);
+      letter-spacing: 0.45em;
+      color: var(--accent-light);
+      text-transform: uppercase;
+      line-height: 1.8;
+    }
+
+    .type-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 0.85em;
+      background: var(--accent);
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 0.8s step-end infinite;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    .divider {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--accent), transparent);
+      margin: 40px 0;
+      opacity: 0;
+      animation: fadeIn 1s ease 1s forwards;
+    }
+
+    .counter {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.28em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeUp 0.9s ease 0.9s forwards;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .counter-dot {
+      width: 5px;
+      height: 5px;
+      background: #4a9960;
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: pulse-dot 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%,100%{ opacity:1; box-shadow: 0 0 5px #4a9960; }
+      50%{ opacity:0.3; box-shadow: none; }
+    }
+
+    .wa-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 17px 42px;
+      border: 1px solid rgba(160,160,184,0.3);
+      border-radius: 2px;
+      background: transparent;
+      color: var(--accent-light);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.74rem;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      animation: fadeUp 0.9s cubic-bezier(0.22,1,0.36,1) 1.1s forwards;
+      transition: color 0.3s;
+    }
+
+    .wa-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--accent-light);
+      transform: translateX(-101%);
+      transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
+    }
+
+    .wa-btn:hover::before { transform: translateX(0); }
+    .wa-btn:hover { color: #111114; }
+
+    .wa-btn svg {
+      width: 15px; height: 15px;
+      fill: currentColor;
+      position: relative; z-index: 1;
+      flex-shrink: 0;
+    }
+
+    .wa-btn-text { position: relative; z-index: 1; }
+
+    .bottom-line {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to top, transparent, var(--accent));
+      margin-top: 48px;
+      opacity: 0;
+      animation: fadeIn 1s ease 1.4s forwards;
+    }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(20px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes fadeIn { to { opacity:1; } }
+
+    @media (max-width: 600px) {
+      #saturn { width: 260px; height: 260px; bottom: -20px; right: -30px; opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+<canvas id="saturn"></canvas>
+
+<div class="page">
+  <div class="top-line"></div>
+  <h1 class="name">ZONIC</h1>
+
+  <div class="quote-wrap">
+    <p class="quote-main" id="typed"></p>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="counter">
+    <span class="counter-dot"></span>
+    <span id="visits">— visitors</span>
+  </div>
+
+  <a class="wa-btn" id="wa-btn" href="https://wa.me/916909692441" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+    <span class="wa-btn-text">Chat on WhatsApp</span>
+  </a>
+
+  <div class="bottom-line"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ── Particles ──
+const cv = document.getElementById('canvas');
+const cx = cv.getContext('2d');
+let W, H, pts = [];
+function resize() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
+function mkPts() {
+  pts = [];
+  const n = Math.floor(W * H / 16000);
+  for (let i = 0; i < n; i++) pts.push({
+    x: Math.random()*W, y: Math.random()*H,
+    r: Math.random()*1.1+0.3,
+    dx: (Math.random()-.5)*.22, dy: (Math.random()-.5)*.22,
+    a: Math.random()*.3+0.08
+  });
+}
+function drawPts() {
+  cx.clearRect(0,0,W,H);
+  for (let i=0;i<pts.length;i++) {
+    const p=pts[i];
+    cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    cx.fillStyle=`rgba(160,160,184,${p.a})`; cx.fill();
+    p.x+=p.dx; p.y+=p.dy;
+    if(p.x<0||p.x>W) p.dx*=-1;
+    if(p.y<0||p.y>H) p.dy*=-1;
+    for(let j=i+1;j<pts.length;j++){
+      const q=pts[j], dx=p.x-q.x, dy=p.y-q.y, d=Math.sqrt(dx*dx+dy*dy);
+      if(d<100){
+        cx.beginPath(); cx.moveTo(p.x,p.y); cx.lineTo(q.x,q.y);
+        cx.strokeStyle=`rgba(160,160,184,${0.06*(1-d/100)})`; cx.lineWidth=0.4; cx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(drawPts);
+}
+resize(); mkPts(); drawPts();
+window.addEventListener('resize',()=>{resize();mkPts();});
+
+// ── Saturn (Three.js) ──
+(function(){
+  const sc = document.getElementById('saturn');
+  const renderer = new THREE.WebGLRenderer({canvas:sc, alpha:true, antialias:true});
+  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setSize(sc.offsetWidth||380, sc.offsetHeight||380);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+  camera.position.set(0, 1.2, 5);
+  camera.lookAt(0, 0, 0);
+
+  // Planet body
+  const pGeo = new THREE.SphereGeometry(1, 64, 64);
+
+  // Planet texture
+  const tc = document.createElement('canvas');
+  tc.width = 512; tc.height = 256;
+  const tctx = tc.getContext('2d');
+  // Base warm beige/gold
+  const g = tctx.createLinearGradient(0,0,0,256);
+  g.addColorStop(0, '#c8a96e');
+  g.addColorStop(0.25, '#d4b87a');
+  g.addColorStop(0.5, '#b89058');
+  g.addColorStop(0.75, '#c8a46a');
+  g.addColorStop(1, '#a07840');
+  tctx.fillStyle = g; tctx.fillRect(0,0,512,256);
+
+  // Horizontal bands
+  const bands = [
+    {y:30,h:18,c:'rgba(180,140,80,0.5)'},
+    {y:60,h:12,c:'rgba(100,75,40,0.4)'},
+    {y:85,h:22,c:'rgba(200,165,95,0.4)'},
+    {y:115,h:8,c:'rgba(90,65,30,0.5)'},
+    {y:135,h:30,c:'rgba(190,155,85,0.35)'},
+    {y:175,h:14,c:'rgba(110,80,40,0.4)'},
+    {y:200,h:20,c:'rgba(185,145,78,0.35)'},
+    {y:228,h:16,c:'rgba(95,70,35,0.4)'},
+  ];
+  bands.forEach(b=>{
+    tctx.fillStyle=b.c;
+    tctx.fillRect(0,b.y,512,b.h);
+  });
+
+  const tex = new THREE.CanvasTexture(tc);
+  const pMat = new THREE.MeshPhongMaterial({
+    map: tex, shininess: 8,
+    specular: new THREE.Color(0x332211),
+  });
+  const planet = new THREE.Mesh(pGeo, pMat);
+  scene.add(planet);
+
+  // Ring system
+  const ringGroup = new THREE.Group();
+  ringGroup.rotation.x = Math.PI * 0.42;
+
+  const rings = [
+    {inner:1.28, outer:1.55, color:'rgba(200,170,110,0.55)'},
+    {inner:1.58, outer:1.85, color:'rgba(180,148,90,0.45)'},
+    {inner:1.88, outer:2.05, color:'rgba(160,130,75,0.3)'},
+    {inner:2.08, outer:2.18, color:'rgba(140,115,65,0.2)'},
+  ];
+
+  rings.forEach(r => {
+    const rc = document.createElement('canvas');
+    rc.width = 512; rc.height = 512;
+    const rctx = rc.getContext('2d');
+    const rg = rctx.createRadialGradient(256,256,0,256,256,256);
+    rg.addColorStop(0,'rgba(0,0,0,0)');
+    rg.addColorStop(0.45,'rgba(0,0,0,0)');
+    rg.addColorStop(0.5, r.color);
+    rg.addColorStop(0.65, r.color.replace(/[\d.]+\)$/, '0.7)'));
+    rg.addColorStop(0.75, r.color);
+    rg.addColorStop(1,'rgba(0,0,0,0)');
+    rctx.fillStyle=rg; rctx.fillRect(0,0,512,512);
+
+    const rGeo = new THREE.RingGeometry(r.inner, r.outer, 128);
+    const rMat = new THREE.MeshBasicMaterial({
+      map: new THREE.CanvasTexture(rc),
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.9,
+    });
+    ringGroup.add(new THREE.Mesh(rGeo, rMat));
+  });
+  scene.add(ringGroup);
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0x886644, 0.5));
+  const sun = new THREE.DirectionalLight(0xffe8c0, 1.4);
+  sun.position.set(-4, 3, 3);
+  scene.add(sun);
+  const fill = new THREE.DirectionalLight(0x445566, 0.3);
+  fill.position.set(3,-2,-2);
+  scene.add(fill);
+
+  function animate() {
+    planet.rotation.y += 0.0012;
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+// ── Typing animation ──
+const txt = 'NO NOISE · JUST PROGRESS';
+const el = document.getElementById('typed');
+let i = 0;
+setTimeout(()=>{
+  function type(){
+    el.innerHTML = txt.slice(0,i) + '<span class="type-cursor"></span>';
+    if(i++ <= txt.length) setTimeout(type, 65);
+  }
+  type();
+}, 1000);
+
+// ── Visitor counter ──
+const k = 'zonic_v2';
+let v = parseInt(localStorage.getItem(k)||'0')+1;
+localStorage.setItem(k,v);
+document.getElementById('visits').textContent = v.toLocaleString()+' visitor'+(v!==1?'s':'');
+
+// ── Click sound ──
+document.getElementById('wa-btn').addEventListener('click',()=>{
+  try {
+    const a = new (window.AudioContext||window.webkitAudioContext)();
+    const o = a.createOscillator(), g = a.createGain();
+    o.connect(g); g.connect(a.destination);
+    o.frequency.setValueAtTime(660,a.currentTime);
+    o.frequency.exponentialRampToValueAtTime(330,a.currentTime+0.15);
+    g.gain.setValueAtTime(0.12,a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,a.currentTime+0.2);
+    o.start(); o.stop(a.currentTime+0.2);
+  } catch(e){}
+});
+</script>
+</body>
+</html>
